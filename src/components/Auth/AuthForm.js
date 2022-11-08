@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 
 import classes from "./AuthForm.module.css";
+
+import AuthContext from "../../store/auth-context";
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -10,6 +12,8 @@ const AuthForm = () => {
     setIsLogin((prevState) => !prevState);
   };
 
+  const authctx = useContext(AuthContext)
+
   const formSubmitHandler = (event) => {
     event.preventDefault();
     let email = event.target.email.value;
@@ -17,6 +21,37 @@ const AuthForm = () => {
    
     setLoading(true)
     if (isLogin) {
+      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCx4Fvp-Si-PUI6sV4wqdCmpEuGlkn-a08',{
+        method: "POST",
+          body: JSON.stringify({
+            email: email,
+            password: password,
+            returnSecureToken: true,
+          }),
+          headers: {
+            "Content-Type": "application/json",
+          }
+      })
+      .then(res=>{
+        setLoading(false)
+        if(res.ok) {
+          return res.json()
+          .then(data=>{
+            authctx.login(data.idToken)
+            console.log(data.idToken)
+          }) 
+        } else {
+          return res.json()
+          .then(error=>{
+            console.log(error)
+           if(error && error.error && error.error.message){
+            alert(error.error.message)
+           } else {
+            alert('Something Went Wrong')
+           }
+          })
+        }
+      })
     } else {
       fetch(
         "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyCx4Fvp-Si-PUI6sV4wqdCmpEuGlkn-a08",
